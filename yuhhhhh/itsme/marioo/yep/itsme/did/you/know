@@ -1,0 +1,257 @@
+        local StarterGui = game:GetService("StarterGui")
+
+        -- Helper function to send notifications
+        local function sendNotification(title, text)
+            StarterGui:SetCore("SendNotification", {
+                Title = title;
+                Text = text;
+                Duration = 5; -- Notification duration (in seconds)
+            })
+        end
+
+        -- Function to unload the script
+        local function unloadScript()
+            if connection then
+                connection:Disconnect()
+            end
+            if deathConnection then
+                deathConnection:Disconnect()
+            end
+            print("Unloaded")
+            sendNotification("Anti Death Counter", "Script has been unloaded.")
+            isRunning = false
+        end
+
+        if isRunning then
+            -- Unload the script
+            unloadScript()
+        else
+            -- Run the script
+            print("Hi monkeys")
+            local Players = game:GetService("Players")
+            local player = Players.LocalPlayer
+            local character = player.Character or player.CharacterAdded:Wait()
+            local humanoid = character:WaitForChild("Humanoid")
+
+            -- Animation ID to monitor
+            local animationID = "11343250001"
+
+            -- Helper to check if animation is playing
+            local function isAnimationPlaying(animTrack, id)
+                return animTrack and animTrack.Animation.AnimationId == "rbxassetid://" .. id
+            end
+
+            -- Function to find the closest player
+            local function findClosestPlayer()
+                local closestPlayer = nil
+                local shortestDistance = math.huge
+
+                -- Iterate through all players to find the closest one
+                for _, otherPlayer in pairs(Players:GetPlayers()) do
+                    if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        local distance = (character.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
+                        if distance < shortestDistance then
+                            shortestDistance = distance
+                            closestPlayer = otherPlayer
+                        end
+                    end
+                end
+
+                return closestPlayer
+            end
+
+            -- Function to monitor animations
+            local function monitorAnimations()
+                connection = humanoid.AnimationPlayed:Connect(function(animTrack)
+                    if isAnimationPlaying(animTrack, animationID) then
+                        -- Animation detected, perform your actions
+                        local originalPosition = character.HumanoidRootPart.Position
+                        local originalOrientation = character.HumanoidRootPart.CFrame
+
+                        -- Target position and orientation
+                        local targetPosition = Vector3.new(1187.54102, -499.052856, 23674.498)
+                        local targetOrientation = CFrame.new(
+                            1187.54102, -499.052856, 23674.498,  -- Position
+                            0.747619033, -6.86524757e-08, -0.664127827,  -- Orientation Matrix
+                            2.13483915e-08, 1, -7.93401611e-08,
+                            0.664127827, 4.51381545e-08, 0.747619033
+                        )
+
+                        -- Function to spawn a part
+                        local function spawnPart()
+                            local part = Instance.new("Part")
+                            part.Size = Vector3.new(500, 1, 500)
+                            part.Anchored = true
+                            part.CFrame = CFrame.new(targetPosition)
+                            part.Parent = workspace
+                            return part
+                        end
+
+                        -- Teleport the player to the target position
+                        local function teleportToTarget()
+                            if character and character:FindFirstChild("HumanoidRootPart") then
+                                local standPosition = targetPosition + Vector3.new(0, 2, 0) -- 2 units above the part
+                                local standOrientation = CFrame.new(
+                                    standPosition,
+                                    standPosition + targetOrientation.LookVector
+                                )
+                                character.HumanoidRootPart.CFrame = standOrientation
+                            end
+                        end
+
+                        -- Define the chat message function
+                        local function chatMessage(str)
+                            str = tostring(str)
+                            local TextChatService = game:GetService("TextChatService")
+                            local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+                            if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+                                TextChatService.TextChannels.RBXGeneral:SendAsync(str)
+                            else
+                                ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(str, "All")
+                            end
+                        end
+
+                        -- Define a list of possible chat messages
+                        local messages = {
+                            "Ah Yes My Anti Death Counter Technique, I Havent Used This Since The Heian Era!",
+                            "Death Counterer You Dare Touch My Soul? Learn Your Place Fool",
+                            "nuh uh no death counter for u Death Counterer",
+                            "The Death Counterer Got Death Counterd?",
+                            "Im Going To Lose?",
+							"My techniques allow me to rewrite the very fabric of Death",
+							"I’ve transcended death! My will is stronger than the Grim Reaper!",
+							"My technique lets me manipulate life and death itself!",
+							"I can face death and laugh in its face! I am invincible!",
+							"My technique allows me to counter death with every breath I take!",
+							"My resolve can counter even the cruelest of fates. I won’t let death claim me!",
+							"With my powers I am the master of my own destiny, even beyond death!",
+                            "Death Counter Ain Nun On Me 😭",
+                            "Domain Expansion Anti Death Counter!",
+                            "Killer Queen Bites The Dust, Killer Queens Third Ability Is A Bomb To Blow Away Anyone Who Tries To Come After Me!",
+                            "You Will Never Reach The Truth",
+                            "Stand Proud Death Counterer You Are Strong",
+                            "Come On Come On Try Harder",
+                            "Dont Even Try To Death Counter Me Death Counterer",
+                            "Even With Your Death Counter Death Counterer You Will Never Beat Me!",
+                            "I Thought I Was Gonna Die For A Second!",
+                            "Gojo Hubs Anti Death Counter Cant Do This 💀",
+                            "Get Ur Death Counter Outta Here!",
+                            "My Anti Death Counter Technique Will Never Fail!",
+                            "Igaris IS Not Worth Grinding On Vanguards But Atleast Im Still Alive!",
+                            "KJ Is Never Releasing But Atleast Im Still Alive!",
+                            "Fall..."
+                        }
+
+                        -- Clone the original messages table to track used messages
+                        local unusedMessages = {}
+
+                        -- Shuffle function
+                        local function shuffle(tbl)
+                            local len = #tbl
+                            for i = len, 2, -1 do
+                                local j = math.random(1, i)
+                                tbl[i], tbl[j] = tbl[j], tbl[i]
+                            end
+                        end
+
+                        -- Initialize the unusedMessages table with shuffled messages
+                        local function resetMessages()
+                            unusedMessages = {unpack(messages)}
+                            shuffle(unusedMessages)
+                        end
+
+                        -- Initialize unusedMessages
+                        resetMessages()
+
+                        -- Function to send a random message without repeating until all are used
+                        local function sendUniqueMessage()
+                            if #unusedMessages == 0 then
+                                resetMessages()  -- Refill and shuffle when all messages have been used
+                            end
+
+                            -- Pop the first message from the shuffled list
+                            local message = table.remove(unusedMessages, 1)
+
+                            -- If the message contains "Death Counterer", replace it with the closest player's DisplayName
+                            if string.find(message, "Death Counterer") then
+                                local closestPlayer = findClosestPlayer()
+                                if closestPlayer then
+                                    local displayName = closestPlayer.DisplayName or closestPlayer.Name
+                                    message = string.gsub(message, "Death Counterer", displayName)
+                                end
+                            end
+
+                            -- Send the message
+                            chatMessage(message)
+                        end
+
+                        -- Example usage: call the function to send a random unique message
+                        sendUniqueMessage()
+
+                        -- Teleport player back to original position
+                        local function teleportBack()
+                            if character and character:FindFirstChild("HumanoidRootPart") then
+                                character.HumanoidRootPart.CFrame = originalOrientation
+                            end
+                        end
+
+                        local player = game.Players.LocalPlayer
+local TextChatService = game:GetService("TextChatService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+-- Function to fix the camera
+local function fixCamera()
+    local camera = game.Workspace.CurrentCamera
+    local savedCFrame = camera.CFrame -- Save the camera's CFrame before destroying it
+    
+    camera:Destroy() -- Destroy the current camera
+    
+    local char = player.Character
+    if char then
+        local humanoid = char:FindFirstChildWhichIsA('Humanoid')
+        if humanoid then
+            local newCamera = Instance.new("Camera")
+            newCamera.Parent = game.Workspace
+            game.Workspace.CurrentCamera = newCamera
+            newCamera.CameraSubject = humanoid
+            newCamera.CameraType = Enum.CameraType.Custom
+            newCamera.CFrame = savedCFrame -- Restore the saved CFrame
+            
+            -- Camera settings
+            player.CameraMinZoomDistance = 0.5
+            player.CameraMaxZoomDistance = 400
+            player.CameraMode = Enum.CameraMode.Classic
+            
+            -- Unanchor the character's head if necessary
+            if char:FindFirstChild("Head") then
+                char.Head.Anchored = false
+            end
+        end
+    end
+end
+
+fixCamera()
+
+                        -- Execute the script
+                        local standPart = spawnPart()
+                        teleportToTarget()
+
+                        -- Teleport back after 1 second
+                        wait(2)
+                        teleportBack()
+                    end
+                end)
+            end
+
+            -- Monitor death event to unload script on death
+            deathConnection = humanoid.Died:Connect(function()
+                unloadScript()
+            end)
+
+            -- Start monitoring animations
+            monitorAnimations()
+
+            -- Send notification that the script is running
+            sendNotification("Anti Death Counter", "Script is now active.")
+            isRunning = true
